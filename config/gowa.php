@@ -1,6 +1,10 @@
 <?php
 
 declare(strict_types=1);
+use Gowa\Laravel\Models\GowaConversation;
+use Gowa\Laravel\Models\GowaInstance;
+use Gowa\Laravel\Models\GowaMessage;
+use Gowa\Laravel\Models\GowaWebhookCall;
 
 $isStateless = (bool) (env('GOWA_STATELESS', false) || env('GOWA_DRIVER_ONLY', false));
 
@@ -52,7 +56,7 @@ return [
     |   as standard Laravel events for your application models to handle.
     |
     */
-    'stateless'   => $isStateless,
+    'stateless' => $isStateless,
     'driver_only' => $isStateless,
 
     /*
@@ -91,7 +95,7 @@ return [
     |
     */
     'auto_sync' => [
-        'inbound'  => (bool) env('GOWA_AUTO_SYNC_INBOUND', env('GOWA_WEBHOOK_AUTO_SYNC', ! $isStateless)),
+        'inbound' => (bool) env('GOWA_AUTO_SYNC_INBOUND', env('GOWA_WEBHOOK_AUTO_SYNC', ! $isStateless)),
         'outbound' => (bool) env('GOWA_AUTO_SYNC_OUTBOUND', ! $isStateless),
     ],
 
@@ -109,12 +113,12 @@ return [
     |
     */
     'webhook' => [
-        'secret'           => env('GOWA_WEBHOOK_SECRET'),
-        'path'             => env('GOWA_WEBHOOK_PATH', 'webhooks/gowa'),
-        'auto_sync'        => (bool) env('GOWA_WEBHOOK_AUTO_SYNC', ! $isStateless),
-        'record_calls'     => (bool) env('GOWA_WEBHOOK_RECORD_CALLS', ! $isStateless),
-        'log_requests'     => (bool) env('GOWA_LOG_WEBHOOKS', false),
-        'log_channel'      => env('GOWA_LOG_CHANNEL'),
+        'secret' => env('GOWA_WEBHOOK_SECRET'),
+        'path' => env('GOWA_WEBHOOK_PATH', 'webhooks/gowa'),
+        'auto_sync' => (bool) env('GOWA_WEBHOOK_AUTO_SYNC', ! $isStateless),
+        'record_calls' => (bool) env('GOWA_WEBHOOK_RECORD_CALLS', ! $isStateless),
+        'log_requests' => (bool) env('GOWA_LOG_WEBHOOKS', false),
+        'log_channel' => env('GOWA_LOG_CHANNEL'),
         'prune_after_days' => (int) env('GOWA_WEBHOOK_PRUNE_DAYS', 30),
     ],
 
@@ -127,10 +131,10 @@ return [
     |
     */
     'models' => [
-        'instance'     => \Gowa\Laravel\Models\GowaInstance::class,
-        'conversation' => \Gowa\Laravel\Models\GowaConversation::class,
-        'message'      => \Gowa\Laravel\Models\GowaMessage::class,
-        'webhook_call' => \Gowa\Laravel\Models\GowaWebhookCall::class,
+        'instance' => GowaInstance::class,
+        'conversation' => GowaConversation::class,
+        'message' => GowaMessage::class,
+        'webhook_call' => GowaWebhookCall::class,
     ],
 
     /*
@@ -140,9 +144,9 @@ return [
     |
     */
     'table_names' => [
-        'instances'     => 'gowa_instances',
+        'instances' => 'gowa_instances',
         'conversations' => 'gowa_conversations',
-        'messages'      => 'gowa_messages',
+        'messages' => 'gowa_messages',
         'webhook_calls' => 'gowa_webhook_calls',
     ],
 
@@ -156,7 +160,7 @@ return [
     |
     */
     'teams' => [
-        'enabled'     => (bool) env('GOWA_TEAMS', false),
+        'enabled' => (bool) env('GOWA_TEAMS', false),
         'foreign_key' => env('GOWA_TEAM_FOREIGN_KEY', 'team_id'),
     ],
 

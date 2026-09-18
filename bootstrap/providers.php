@@ -1,6 +1,11 @@
 <?php
 
+use App\Providers\AppServiceProvider;
+use App\Providers\Filament\AdminPanelProvider;
+use App\Providers\RuntimeSettingsServiceProvider;
+
 return [
-    App\Providers\AppServiceProvider::class,
-    App\Providers\Filament\AdminPanelProvider::class,
+    RuntimeSettingsServiceProvider::class,
+    AppServiceProvider::class,
+    AdminPanelProvider::class,
 ];

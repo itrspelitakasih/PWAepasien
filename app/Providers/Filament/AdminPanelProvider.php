@@ -6,6 +6,7 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -30,7 +31,16 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::Blue,
+            ])
+            ->navigationGroups([
+                // Locked non-collapsible: Filament's sidebar-group collapse
+                // state is restored by a raw pre-Alpine script racing
+                // against Alpine's own persisted store (see
+                // vendor/filament/filament/resources/views/livewire/sidebar.blade.php),
+                // which made the "WhatsApp" group appear to collapse on its
+                // own. Disabling collapsing sidesteps the race entirely.
+                NavigationGroup::make('WhatsApp')->collapsible(false),
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')

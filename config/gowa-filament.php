@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+use Gowa\Laravel\Models\GowaInstance;
 
 return [
     /*
@@ -9,9 +10,9 @@ return [
     |--------------------------------------------------------------------------
     */
     'navigation' => [
-        'group'                      => 'WhatsApp',
-        'sort'                       => 1,
-        'icon'                       => 'heroicon-o-chat-bubble-left-right',
+        'group' => 'WhatsApp',
+        'sort' => 1,
+        'icon' => 'heroicon-o-chat-bubble-left-right',
         'should_register_navigation' => true,
     ],
 
@@ -24,7 +25,7 @@ return [
     | Defaults to \Gowa\Laravel\Models\GowaInstance::class.
     |
     */
-    'model' => \Gowa\Laravel\Models\GowaInstance::class,
+    'model' => GowaInstance::class,
 
     /*
     |--------------------------------------------------------------------------
@@ -32,7 +33,7 @@ return [
     |--------------------------------------------------------------------------
     */
     'polling' => [
-        'qr_code_interval'      => 3,
+        'qr_code_interval' => 3,
         'pairing_code_interval' => 3,
     ],
 ];

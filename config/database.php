@@ -84,6 +84,28 @@ return [
             ]) : [],
         ],
 
+        // Read-only link to the SIMRS Khanza hospital database (schema `sik`), separate from this app's own database.
+        // Overridden at runtime from the Setting record — see App\Providers\RuntimeSettingsServiceProvider.
+        'sik' => [
+            'driver' => 'mysql',
+            'url' => env('SIK_DB_URL'),
+            'host' => env('SIK_DB_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('SIK_DB_PORT', env('DB_PORT', '3306')),
+            'database' => env('SIK_DB_DATABASE', 'sik'),
+            'username' => env('SIK_DB_USERNAME', env('DB_USERNAME', 'root')),
+            'password' => env('SIK_DB_PASSWORD', env('DB_PASSWORD', '')),
+            'unix_socket' => env('SIK_DB_SOCKET', ''),
+            'charset' => env('SIK_DB_CHARSET', 'utf8mb4'),
+            'collation' => env('SIK_DB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => false,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DB_URL'),
