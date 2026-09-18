@@ -1,9 +1,22 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-theme-pref="{{ optional(auth('pasien')->user())->theme ?? 'system' }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{{ $title ?? 'Portal Pasien' }} &mdash; {{ \App\Models\Setting::current()->app_name }}</title>
+        <script>
+            (function () {
+                try {
+                    var pref = document.documentElement.dataset.themePref;
+                    if (pref !== 'dark' && pref !== 'light') {
+                        pref = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                    }
+                    document.documentElement.classList.toggle('dark', pref === 'dark');
+                    localStorage.setItem('theme', pref);
+                } catch (e) {}
+            })();
+        </script>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="min-h-screen bg-gray-200 text-gray-900 antialiased dark:bg-black dark:text-gray-100">

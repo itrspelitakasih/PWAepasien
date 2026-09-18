@@ -1,8 +1,8 @@
 @extends('layouts.patient-app', ['title' => 'Profil'])
 
 @section('content')
-    <div class="relative overflow-hidden bg-blue-600 px-5 pb-8 pt-6 text-white dark:bg-blue-800">
-        <h1 class="relative z-10 mb-4 text-lg font-semibold">Profil</h1>
+    <div class="relative overflow-hidden rounded-b-3xl bg-linear-to-b from-blue-500 to-blue-700 px-5 pb-14 pt-6 text-white dark:from-blue-700 dark:to-blue-900">
+        <h1 class="relative z-10 mb-6 text-xl font-semibold">Profil</h1>
         <div class="relative z-10 flex items-center gap-3">
             <span class="flex size-14 items-center justify-center rounded-full bg-white/20">
                 <svg class="size-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
@@ -16,7 +16,7 @@
         </div>
     </div>
 
-    <div class="-mt-4 px-5">
+    <div class="relative -mt-8 px-5">
         <section class="mb-6 rounded-2xl bg-white p-5 shadow-md dark:bg-gray-900">
             <h2 class="mb-3 text-sm font-semibold text-gray-500 dark:text-gray-400">Nomor WhatsApp</h2>
 
@@ -56,6 +56,32 @@
                     Verifikasi
                 </button>
             </form>
+        </section>
+
+        <section class="mb-6 rounded-2xl bg-white p-5 shadow-md dark:bg-gray-900">
+            <h2 class="mb-3 text-sm font-semibold text-gray-500 dark:text-gray-400">Tampilan</h2>
+
+            <div class="grid grid-cols-3 gap-2">
+                @foreach ([
+                    'light' => 'Terang',
+                    'dark' => 'Gelap',
+                    'system' => 'Ikuti Sistem',
+                ] as $value => $label)
+                    <label
+                        class="theme-option flex cursor-pointer items-center justify-center rounded-lg border px-2 py-2 text-center text-xs font-medium border-gray-300 text-gray-700 has-checked:border-blue-600 has-checked:bg-blue-50 has-checked:text-blue-600 dark:border-gray-700 dark:text-gray-200 dark:has-checked:border-blue-400 dark:has-checked:bg-blue-900/30 dark:has-checked:text-blue-400"
+                    >
+                        <input
+                            type="radio"
+                            name="theme"
+                            value="{{ $value }}"
+                            class="sr-only"
+                            @checked(($account->theme ?? 'system') === $value)
+                            onchange="patientSetTheme('{{ $value }}', '{{ route('patient.settings.theme') }}')"
+                        >
+                        {{ $label }}
+                    </label>
+                @endforeach
+            </div>
         </section>
 
         <section class="mb-6 rounded-2xl bg-white p-5 shadow-md dark:bg-gray-900">

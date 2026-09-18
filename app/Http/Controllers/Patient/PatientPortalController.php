@@ -4,13 +4,16 @@ namespace App\Http\Controllers\Patient;
 
 use App\Http\Controllers\Controller;
 use App\Models\PatientAccount;
+use App\Models\QueueTicket;
 use App\Repositories\Khanza\DokterRepository;
 use App\Repositories\Khanza\JadwalRepository;
 use App\Repositories\Khanza\PoliklinikRepository;
+use App\Services\Antrian\QueueTicketService;
 use App\Services\Patients\PatientAuthService;
 use App\Services\Patients\PatientOtpService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -23,17 +26,37 @@ class PatientPortalController extends Controller
         private readonly JadwalRepository $jadwalRepository,
         private readonly DokterRepository $dokterRepository,
         private readonly PoliklinikRepository $poliklinikRepository,
+        private readonly QueueTicketService $queueTicketService,
     ) {}
+
+    public function welcome(): View
+    {
+        return view('patient.welcome');
+    }
 
     public function index(Request $request): View
     {
+        /** @var PatientAccount $account */
+        $account = $request->user('pasien');
+
         $jadwalHariIni = $this->jadwalRepository->forDate(Carbon::today());
 
+        $antrianAktif = QueueTicket::query()
+            ->where('no_rkm_medis', $account->no_rkm_medis)
+            ->whereIn('status', ['waiting', 'called'])
+            ->whereDate('tanggal', Carbon::today())
+            ->orderBy('queue_number')
+            ->first();
+
         return view('patient.dashboard', [
-            'account' => $request->user('pasien'),
+            'account' => $account,
             'jadwalHariIni' => $jadwalHariIni,
             'dokters' => $this->dokterRepository->findMany($jadwalHariIni->pluck('jadwal.kd_dokter')->all()),
             'polis' => $this->poliklinikRepository->findMany($jadwalHariIni->pluck('jadwal.kd_poli')->all()),
+            'antrianAktif' => $antrianAktif,
+            'antrianPoli' => $antrianAktif ? $this->poliklinikRepository->find($antrianAktif->kd_poli) : null,
+            'antrianPosisi' => $antrianAktif ? $this->queueTicketService->positionAhead($antrianAktif) : null,
+            'antrianEta' => $antrianAktif ? $this->queueTicketService->etaMinutes($antrianAktif) : null,
         ]);
     }
 
@@ -61,6 +84,23 @@ class PatientPortalController extends Controller
         ]);
 
         return back()->with('status', 'Preferensi notifikasi tersimpan.');
+    }
+
+    public function updateTheme(Request $request): RedirectResponse|Response
+    {
+        $data = $request->validate([
+            'theme' => ['required', 'in:light,dark,system'],
+        ]);
+
+        /** @var PatientAccount $account */
+        $account = $request->user('pasien');
+        $account->update(['theme' => $data['theme']]);
+
+        if ($request->expectsJson()) {
+            return response()->noContent();
+        }
+
+        return back()->with('status', 'Preferensi tampilan tersimpan.');
     }
 
     public function requestWaNumberChange(Request $request): RedirectResponse

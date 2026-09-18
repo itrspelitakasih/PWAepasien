@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Patient;
 
 use App\Http\Controllers\Controller;
 use App\Models\PatientAccount;
+use App\Repositories\Khanza\AntripoliRepository;
 use App\Repositories\Khanza\BookingRegistrasiRepository;
 use App\Repositories\Khanza\DokterRepository;
 use App\Repositories\Khanza\JadwalRepository;
@@ -20,6 +21,7 @@ class PatientRegistrationController extends Controller
 {
     public function __construct(
         private readonly PoliklinikRepository $poliklinikRepository,
+        private readonly AntripoliRepository $antripoliRepository,
         private readonly DokterRepository $dokterRepository,
         private readonly JadwalRepository $jadwalRepository,
         private readonly PenjabRepository $penjabRepository,
@@ -45,7 +47,10 @@ class PatientRegistrationController extends Controller
 
         return view('patient.pendaftaran', [
             'account' => $account,
-            'polis' => $this->poliklinikRepository->active(),
+            'polis' => $this->poliklinikRepository
+                ->findMany($this->antripoliRepository->activeKdPoli()->all())
+                ->sortBy('nm_poli')
+                ->values(),
             'kdPoli' => $kdPoli,
             'tanggal' => $tanggal,
             'jadwal' => $jadwal,

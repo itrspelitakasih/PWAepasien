@@ -18,20 +18,20 @@
                 value="{{ old('no_rkm_medis') }}"
                 required
                 autofocus
-                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-amber-500 focus:ring-amber-500 dark:border-gray-700 dark:bg-gray-800"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800"
             >
         </div>
 
         <button
             type="submit"
-            class="w-full rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700"
+            class="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
         >
             Kirim Kode OTP
         </button>
     </form>
 
     <div class="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
-        <a href="{{ route('patient.login') }}" class="font-medium text-amber-600 hover:underline dark:text-amber-400">
+        <a href="{{ route('patient.login') }}" class="font-medium text-blue-600 hover:underline dark:text-blue-400">
             Masuk dengan tanggal lahir
         </a>
     </div>

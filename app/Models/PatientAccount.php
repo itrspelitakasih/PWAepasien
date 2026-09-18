@@ -28,6 +28,7 @@ class PatientAccount extends Authenticatable
         'notify_appointment',
         'notify_queue',
         'notify_lab_result',
+        'theme',
         'last_login_at',
     ];
 

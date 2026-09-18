@@ -4,9 +4,25 @@
     <div class="relative overflow-hidden rounded-b-3xl bg-linear-to-b from-blue-500 to-blue-700 px-5 pb-14 pt-6 text-white dark:from-blue-700 dark:to-blue-900">
         <div class="relative z-10 mb-6 flex items-center justify-between">
             <h1 class="text-xl font-semibold">Beranda</h1>
-            <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
-            </svg>
+            <div class="flex items-center gap-3">
+                <button
+                    type="button"
+                    onclick="patientSetTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark', '{{ route('patient.settings.theme') }}')"
+                    class="flex size-8 items-center justify-center rounded-full bg-white/20 text-white"
+                    aria-label="Ganti mode tampilan"
+                >
+                    <svg class="size-5 dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-6.364-.386 1.591-1.591M3 12h2.25m.386-6.364 1.591 1.591M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                    </svg>
+                    <svg class="hidden size-5 dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+                    </svg>
+                </button>
+
+                <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+                </svg>
+            </div>
         </div>
 
         <div class="relative z-10 flex items-center gap-3">
@@ -25,19 +41,55 @@
 
     <div class="relative -mt-8 px-5">
         <div class="rounded-2xl bg-white p-5 shadow-md dark:bg-gray-900">
-            <h2 class="mb-1 text-base font-semibold">Daftar Mandiri</h2>
-            <p class="mb-4 text-sm text-gray-500 dark:text-gray-400">
-                Silahkan lakukan pendaftaran mandiri klinik rawat jalan.
-            </p>
-            <a
-                href="{{ route('patient.pendaftaran') }}"
-                class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-            >
-                <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
-                </svg>
-                Daftar Antrian
-            </a>
+            @if ($antrianAktif)
+                <div class="mb-3 flex items-center justify-between">
+                    <h2 class="text-base font-semibold">Status Antrian</h2>
+                    <span class="rounded-full px-3 py-1 text-xs font-semibold {{ $antrianAktif->status === 'called' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' }}">
+                        {{ $antrianAktif->status === 'called' ? 'Sedang Dipanggil' : 'Menunggu' }}
+                    </span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="text-3xl font-bold text-blue-600 dark:text-blue-400">{{ $antrianAktif->queue_number }}</span>
+                    <div class="min-w-0 text-sm">
+                        <p class="font-medium">{{ $antrianPoli?->nm_poli ?? $antrianAktif->kd_poli }}</p>
+                        @if ($antrianAktif->status === 'waiting')
+                            <p class="text-gray-500 dark:text-gray-400">
+                                {{ $antrianPosisi }} pasien di depan Anda &middot; &plusmn; {{ $antrianEta }} menit
+                            </p>
+                        @else
+                            <p class="text-gray-500 dark:text-gray-400">Silakan menuju ruang periksa.</p>
+                        @endif
+                    </div>
+                </div>
+                <a
+                    href="{{ route('patient.antrian') }}"
+                    class="mt-4 inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                >
+                    Lihat Detail Antrian
+                    <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                </a>
+            @else
+                <div class="mb-3 flex items-center justify-between">
+                    <h2 class="text-base font-semibold">Status Antrian</h2>
+                    <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                        Belum Ada Antrian
+                    </span>
+                </div>
+                <p class="mb-4 text-sm text-gray-500 dark:text-gray-400">
+                    Anda belum memiliki antrian hari ini. Silahkan lakukan pendaftaran mandiri klinik rawat jalan.
+                </p>
+                <a
+                    href="{{ route('patient.pendaftaran') }}"
+                    class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                >
+                    <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
+                    </svg>
+                    Daftar Antrian
+                </a>
+            @endif
         </div>
     </div>
 
@@ -55,7 +107,7 @@
 
         $icons = [
             'calendar' => 'M6.75 3v2.25M17.25 3v2.25M3.75 18.75h16.5A.75.75 0 0 0 21 18V6.75a.75.75 0 0 0-.75-.75H3.75a.75.75 0 0 0-.75.75V18c0 .414.336.75.75.75Zm0 0M3 10.5h18',
-            'stethoscope' => 'M8.25 3v2.25M6 6.75h4.5M8.25 6.75v6a4.5 4.5 0 0 0 9 0v-1.5m0 0a2.25 2.25 0 1 0 0-4.5 2.25 2.25 0 0 0 0 4.5Zm-13.5 9a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z',
+            'stethoscope' => 'M11 2v2M5 2v2M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1M8 15a6 6 0 0 0 12 0v-3M18 10a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z',
             'mail' => 'M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75',
             'history' => 'M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
             'queue' => 'M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Z',
@@ -92,7 +144,7 @@
     <div class="mt-8 pb-6">
         <h2 class="mb-3 px-5 text-base font-semibold">Jadwal Dokter Hari Ini</h2>
 
-        <div class="flex snap-x snap-mandatory gap-3 overflow-x-auto scrollbar-none px-5 pb-1">
+        <div data-drag-scroll class="flex cursor-grab snap-x snap-mandatory gap-3 overflow-x-auto scrollbar-none pb-1 active:cursor-grabbing">
             @forelse ($jadwalHariIni as $entry)
                 @php
                     $namaDokter = $dokters[$entry['jadwal']->kd_dokter]?->nm_dokter ?? $entry['jadwal']->kd_dokter;
@@ -102,7 +154,7 @@
                         ->take(2)
                         ->implode('');
                 @endphp
-                <div class="flex w-60 shrink-0 snap-start items-start gap-2.5 rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                <div class="flex w-60 shrink-0 snap-start items-start gap-2.5 rounded-2xl border border-gray-200 bg-white p-3 shadow-sm first:ml-5 last:mr-5 dark:border-gray-800 dark:bg-gray-900">
                     <div class="relative flex size-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
                         {{ $initials }}
                         <span
@@ -126,7 +178,7 @@
                     </div>
                 </div>
             @empty
-                <p class="text-sm text-gray-500 dark:text-gray-400">Tidak ada jadwal dokter hari ini.</p>
+                <p class="ml-5 text-sm text-gray-500 dark:text-gray-400">Tidak ada jadwal dokter hari ini.</p>
             @endforelse
         </div>
     </div>

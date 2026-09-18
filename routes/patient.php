@@ -6,6 +6,7 @@ use App\Http\Controllers\Patient\PatientOtpController;
 use App\Http\Controllers\Patient\PatientPortalController;
 use App\Http\Controllers\Patient\PatientQueueController;
 use App\Http\Controllers\Patient\PatientRegistrationController;
+use App\Http\Controllers\Patient\PatientRegistrationRequestController;
 use App\Http\Controllers\Patient\PatientScheduleController;
 use App\Http\Controllers\Patient\PatientSuratController;
 use App\Http\Middleware\EnsurePortalIsConfigured;
@@ -13,6 +14,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('portal')->name('patient.')->middleware(EnsurePortalIsConfigured::class)->group(function () {
     Route::middleware('guest:pasien')->group(function () {
+        Route::get('welcome', [PatientPortalController::class, 'welcome'])->name('welcome');
+
         Route::get('login', [PatientAuthController::class, 'create'])->name('login');
         Route::post('login', [PatientAuthController::class, 'store'])->name('login.store');
 
@@ -20,6 +23,9 @@ Route::prefix('portal')->name('patient.')->middleware(EnsurePortalIsConfigured::
         Route::post('login/otp', [PatientOtpController::class, 'store'])->name('otp.send');
         Route::get('login/otp/verify', [PatientOtpController::class, 'edit'])->name('otp.verify');
         Route::post('login/otp/verify', [PatientOtpController::class, 'update'])->name('otp.verify.store');
+
+        Route::get('daftar', [PatientRegistrationRequestController::class, 'create'])->name('register');
+        Route::post('daftar', [PatientRegistrationRequestController::class, 'store'])->name('register.store');
     });
 
     Route::middleware('auth:pasien')->group(function () {
@@ -27,6 +33,7 @@ Route::prefix('portal')->name('patient.')->middleware(EnsurePortalIsConfigured::
         Route::get('/', [PatientPortalController::class, 'index'])->name('dashboard');
         Route::get('settings', [PatientPortalController::class, 'edit'])->name('settings');
         Route::put('settings/preferences', [PatientPortalController::class, 'updatePreferences'])->name('settings.preferences');
+        Route::put('settings/theme', [PatientPortalController::class, 'updateTheme'])->name('settings.theme');
         Route::post('settings/wa-number', [PatientPortalController::class, 'requestWaNumberChange'])->name('settings.wa-number.request');
         Route::post('settings/wa-number/verify', [PatientPortalController::class, 'confirmWaNumberChange'])->name('settings.wa-number.verify');
 
