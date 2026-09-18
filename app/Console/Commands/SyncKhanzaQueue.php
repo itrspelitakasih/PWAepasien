@@ -8,6 +8,7 @@ use App\Models\QueueTicket;
 use App\Repositories\Khanza\RegPeriksaRepository;
 use App\Services\Antrian\QueueTicketService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 class SyncKhanzaQueue extends Command
@@ -30,7 +31,10 @@ class SyncKhanzaQueue extends Command
 
     public function handle(RegPeriksaRepository $regPeriksaRepository, QueueTicketService $queueTicketService): int
     {
-        $cursor = (string) Cache::get(self::CURSOR_CACHE_KEY, '');
+        // No cursor cached yet means this poller has never run before —
+        // start from today rather than walking Khanza's entire `reg_periksa`
+        // history (which can be hundreds of thousands of rows) 200 at a time.
+        $cursor = (string) Cache::get(self::CURSOR_CACHE_KEY, Carbon::today()->format('Y/m/d').'/000000');
 
         $newRegistrations = $regPeriksaRepository->newSince($cursor);
 
