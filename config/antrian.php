@@ -39,4 +39,16 @@ return [
     */
     'poll_interval_seconds' => (int) env('ANTRIAN_POLL_INTERVAL_SECONDS', 30),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Token API Panggil Antrean
+    |--------------------------------------------------------------------------
+    |
+    | Bearer token yang wajib dikirim aplikasi kasir SIMRS Khanza saat
+    | memanggil POST /api/antrian/panggil (dipicu dari tombol "Masuk Poli").
+    | Kosong berarti endpoint ini menolak semua permintaan.
+    |
+    */
+    'api_token' => env('ANTRIAN_API_TOKEN'),
+
 ];

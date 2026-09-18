@@ -78,12 +78,47 @@ class QueueTicketService
             return null;
         }
 
+        $this->notifyCalled($ticket);
+
+        return $ticket;
+    }
+
+    /**
+     * Call one specific ticket out of FIFO order — used when Khanza itself
+     * already identifies which visit to call (the cashier's "Masuk Poli"
+     * action), rather than this app picking the oldest waiting ticket for
+     * the poli. A no-op if the ticket isn't (still) waiting, so a duplicate
+     * call from Khanza — e.g. the button clicked twice — never re-notifies.
+     */
+    public function callTicket(QueueTicket $ticket): bool
+    {
+        $called = DB::transaction(function () use ($ticket): bool {
+            $locked = QueueTicket::query()->whereKey($ticket->id)->lockForUpdate()->first();
+
+            if (! $locked || $locked->status !== 'waiting') {
+                return false;
+            }
+
+            $locked->update(['status' => 'called', 'called_at' => now()]);
+
+            return true;
+        });
+
+        if (! $called) {
+            return false;
+        }
+
+        $this->notifyCalled($ticket->fresh());
+
+        return true;
+    }
+
+    private function notifyCalled(QueueTicket $ticket): void
+    {
         $ticket->forceFill(['notified_called_at' => now()])->save();
         SendQueueNotification::dispatch($ticket->id, 'called');
 
-        $this->recalculateNearNotifications($kdPoli, $tanggal);
-
-        return $ticket;
+        $this->recalculateNearNotifications($ticket->kd_poli, $ticket->tanggal);
     }
 
     public function markDone(QueueTicket $ticket): void

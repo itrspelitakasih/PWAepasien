@@ -76,6 +76,42 @@ class QueueTicketServiceTest extends TestCase
         $this->assertNull($service->callNext('POLI1', Carbon::parse('2026-09-18')));
     }
 
+    public function test_call_ticket_calls_a_specific_waiting_ticket_out_of_order(): void
+    {
+        Queue::fake();
+
+        $service = app(QueueTicketService::class);
+
+        $first = $service->issueTicket($this->regPeriksa('2026/09/18/000001', '000001'));
+        $second = $service->issueTicket($this->regPeriksa('2026/09/18/000002', '000002'));
+
+        $result = $service->callTicket($second);
+
+        $this->assertTrue($result);
+        $this->assertSame('called', $second->fresh()->status);
+        $this->assertNotNull($second->fresh()->called_at);
+        $this->assertSame('waiting', $first->fresh()->status);
+
+        Queue::assertPushed(SendQueueNotification::class, fn (SendQueueNotification $job): bool => $job->queueTicketId === $second->id && $job->type === 'called');
+    }
+
+    public function test_call_ticket_is_a_no_op_when_the_ticket_is_not_waiting(): void
+    {
+        Queue::fake();
+
+        $service = app(QueueTicketService::class);
+
+        $ticket = $service->issueTicket($this->regPeriksa('2026/09/18/000001', '000001'));
+        $service->markDone($ticket);
+
+        $result = $service->callTicket($ticket->fresh());
+
+        $this->assertFalse($result);
+        $this->assertSame('done', $ticket->fresh()->status);
+
+        Queue::assertNotPushed(SendQueueNotification::class, fn (SendQueueNotification $job): bool => $job->type === 'called');
+    }
+
     public function test_mark_done_and_skip_transition_status(): void
     {
         Queue::fake();
