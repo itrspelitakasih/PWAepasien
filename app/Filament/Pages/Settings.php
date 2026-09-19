@@ -5,8 +5,11 @@ namespace App\Filament\Pages;
 use App\Models\Setting;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
@@ -37,6 +40,21 @@ class Settings extends Page implements HasForms
     protected static ?string $title = 'Pengaturan Aplikasi';
 
     /**
+     * Preset theme colors (hex => label). The hex is the `600` shade.
+     *
+     * @var array<string, string>
+     */
+    private const THEME_PRESETS = [
+        '#2563eb' => 'Biru',
+        '#0d9488' => 'Teal',
+        '#059669' => 'Hijau',
+        '#4f46e5' => 'Indigo',
+        '#7c3aed' => 'Ungu',
+        '#e11d48' => 'Merah',
+        '#ea580c' => 'Oranye',
+    ];
+
+    /**
      * @var array<string, mixed>
      */
     public ?array $data = [];
@@ -44,9 +62,11 @@ class Settings extends Page implements HasForms
     public function mount(): void
     {
         $this->form->fill(Setting::current()->only([
-            'app_name', 'logo_path', 'icon_path', 'favicon_path',
+            'app_name', 'logo_path', 'icon_path', 'favicon_path', 'theme_color',
             'gowa_base_url', 'gowa_username', 'gowa_password', 'gowa_timeout', 'gowa_default_device_id',
             'sik_db_host', 'sik_db_port', 'sik_db_database', 'sik_db_username', 'sik_db_password',
+            'radiologi_image_base_url',
+            'queue_purge_enabled', 'queue_purge_keep_days',
         ]));
     }
 
@@ -88,6 +108,28 @@ class Settings extends Page implements HasForms
                             ->imageEditor(),
                     ])
                     ->columns(3),
+                Section::make('Tema Warna Portal')
+                    ->description('Warna utama portal pasien (tombol, tautan, menu aktif, dan header). Kosongkan untuk memakai biru bawaan. Pilih warna yang cukup gelap agar teks putih tetap terbaca.')
+                    ->schema([
+                        ToggleButtons::make('theme_preset')
+                            ->label('Pilihan Cepat')
+                            ->options(self::THEME_PRESETS)
+                            ->inline()
+                            ->dehydrated(false)
+                            ->live()
+                            ->afterStateHydrated(fn (ToggleButtons $component, callable $get) => $component->state(
+                                array_key_exists((string) $get('theme_color'), self::THEME_PRESETS) ? $get('theme_color') : null,
+                            ))
+                            ->afterStateUpdated(fn ($state, callable $set) => $set('theme_color', $state)),
+                        ColorPicker::make('theme_color')
+                            ->label('Warna Utama')
+                            ->helperText('Kosongkan untuk kembali ke warna bawaan.')
+                            ->live()
+                            ->afterStateUpdated(fn ($state, callable $set) => $set(
+                                'theme_preset',
+                                array_key_exists((string) $state, self::THEME_PRESETS) ? $state : null,
+                            )),
+                    ]),
                 Section::make('WhatsApp (GOWA)')
                     ->description('Koneksi ke server GOWA untuk mengirim OTP login dan notifikasi antrean via WhatsApp.')
                     ->schema([
@@ -156,6 +198,33 @@ class Settings extends Page implements HasForms
                             ->icon(Heroicon::OutlinedSignal)
                             ->color('gray')
                             ->action(fn () => $this->testSikConnection()),
+                    ]),
+                Section::make('Gambar Radiologi')
+                    ->description('Lokasi gambar hasil pemeriksaan radiologi dari SIMRS Khanza. Gambar ditampilkan pada riwayat radiologi pasien.')
+                    ->schema([
+                        TextInput::make('radiologi_image_base_url')
+                            ->label('URL Folder Gambar Radiologi')
+                            ->url()
+                            ->placeholder('http://192.168.1.10/webapps/radiologi')
+                            ->helperText('Alamat folder webapps Khanza yang menyimpan gambar radiologi. Ditambahkan di depan path pada kolom lokasi_gambar (tabel gambar_radiologi). Kosongkan untuk tidak menampilkan gambar.')
+                            ->maxLength(255),
+                    ]),
+                Section::make('Pembersihan Tiket Antrean')
+                    ->description('Tiket antrean pada tanggal yang sudah lewat tidak dipakai lagi oleh portal. Aktifkan agar tiket tersebut dihapus otomatis setiap dini hari (pukul 00:05). Membutuhkan penjadwal (schedule:work atau cron) yang berjalan.')
+                    ->schema([
+                        Toggle::make('queue_purge_enabled')
+                            ->label('Hapus tiket antrean lama secara otomatis')
+                            ->live(),
+                        TextInput::make('queue_purge_keep_days')
+                            ->label('Simpan riwayat (hari)')
+                            ->helperText('0 = hanya tiket hari ini yang disimpan. 7 = tiket 7 hari terakhir juga disimpan.')
+                            ->numeric()
+                            ->integer()
+                            ->minValue(0)
+                            ->maxValue(365)
+                            ->default(0)
+                            ->required()
+                            ->visible(fn (callable $get): bool => (bool) $get('queue_purge_enabled')),
                     ]),
             ])
             ->statePath('data');

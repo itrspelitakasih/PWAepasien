@@ -6,6 +6,7 @@ use App\Models\PatientAccount;
 use App\Models\QueueTicket;
 use App\Services\Antrian\QueueTicketService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Carbon;
 use Livewire\Component;
 
 /**
@@ -19,10 +20,12 @@ class QueueBoard extends Component
         /** @var PatientAccount $account */
         $account = auth('pasien')->user();
 
+        $queueTicketService->syncPatientToday($account->no_rkm_medis);
+
         $tickets = QueueTicket::query()
             ->where('no_rkm_medis', $account->no_rkm_medis)
             ->whereIn('status', ['waiting', 'called'])
-            ->orderByDesc('tanggal')
+            ->whereDate('tanggal', Carbon::today())
             ->orderBy('queue_number')
             ->get()
             ->map(fn (QueueTicket $ticket): array => [

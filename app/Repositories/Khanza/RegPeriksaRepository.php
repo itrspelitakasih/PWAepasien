@@ -37,6 +37,23 @@ class RegPeriksaRepository
     }
 
     /**
+     * A patient's outpatient (Ralan) registrations for one day. Lets the
+     * portal show today's queue straight from Khanza instead of waiting for
+     * the poller to catch up.
+     *
+     * @return Collection<int, RegPeriksa>
+     */
+    public function ralanForPatientOn(string $noRkmMedis, string $date): Collection
+    {
+        return RegPeriksa::query()
+            ->where('no_rkm_medis', $noRkmMedis)
+            ->where('tgl_registrasi', $date)
+            ->where('status_lanjut', 'Ralan')
+            ->orderBy('no_rawat')
+            ->get();
+    }
+
+    /**
      * Current `stts` for a batch of visits, keyed by `no_rawat`. Used by
      * the poller to detect registrations cancelled in Khanza after a
      * queue ticket was already issued for them.
@@ -76,6 +93,8 @@ class RegPeriksaRepository
     {
         return RegPeriksa::query()
             ->where('no_rkm_medis', $noRkmMedis)
+            ->orderByDesc('tgl_registrasi')
+            ->orderByDesc('jam_reg')
             ->orderByDesc('no_rawat')
             ->limit($limit)
             ->get();

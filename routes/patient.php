@@ -2,17 +2,21 @@
 
 use App\Http\Controllers\Patient\PatientAuthController;
 use App\Http\Controllers\Patient\PatientHistoryController;
+use App\Http\Controllers\Patient\PatientLabController;
+use App\Http\Controllers\Patient\PatientNotificationController;
 use App\Http\Controllers\Patient\PatientOtpController;
 use App\Http\Controllers\Patient\PatientPortalController;
 use App\Http\Controllers\Patient\PatientQueueController;
+use App\Http\Controllers\Patient\PatientRadiologiController;
 use App\Http\Controllers\Patient\PatientRegistrationController;
 use App\Http\Controllers\Patient\PatientRegistrationRequestController;
+use App\Http\Controllers\Patient\PatientRoomController;
 use App\Http\Controllers\Patient\PatientScheduleController;
 use App\Http\Controllers\Patient\PatientSuratController;
 use App\Http\Middleware\EnsurePortalIsConfigured;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('portal')->name('patient.')->middleware(EnsurePortalIsConfigured::class)->group(function () {
+Route::prefix('mobile')->name('patient.')->middleware(EnsurePortalIsConfigured::class)->group(function () {
     Route::middleware('guest:pasien')->group(function () {
         Route::get('welcome', [PatientPortalController::class, 'welcome'])->name('welcome');
 
@@ -38,10 +42,17 @@ Route::prefix('portal')->name('patient.')->middleware(EnsurePortalIsConfigured::
         Route::post('settings/wa-number/verify', [PatientPortalController::class, 'confirmWaNumberChange'])->name('settings.wa-number.verify');
 
         Route::get('antrian', [PatientQueueController::class, 'index'])->name('antrian');
+        Route::get('antrian/dipanggil', [PatientQueueController::class, 'called'])->name('antrian.called');
+        Route::get('notifikasi', [PatientNotificationController::class, 'index'])->name('notifikasi');
         Route::get('jadwal', [PatientScheduleController::class, 'index'])->name('jadwal');
         Route::get('riwayat', [PatientHistoryController::class, 'index'])->name('riwayat');
         Route::get('riwayat/detail', [PatientHistoryController::class, 'show'])->name('riwayat.show');
-        Route::get('surat', [PatientSuratController::class, 'index'])->name('surat');
+        Route::get('lab', [PatientLabController::class, 'index'])->name('lab');
+        Route::get('lab/detail', [PatientLabController::class, 'show'])->name('lab.show');
+        Route::get('radiologi', [PatientRadiologiController::class, 'index'])->name('radiologi');
+        Route::get('radiologi/detail', [PatientRadiologiController::class, 'show'])->name('radiologi.show');
+        Route::get('kamar', [PatientRoomController::class, 'index'])->name('kamar');
+        Route::get('surat',[PatientSuratController::class, 'index'])->name('surat');
         Route::get('pendaftaran', [PatientRegistrationController::class, 'create'])->name('pendaftaran');
         Route::post('pendaftaran', [PatientRegistrationController::class, 'store'])->name('pendaftaran.store');
     });

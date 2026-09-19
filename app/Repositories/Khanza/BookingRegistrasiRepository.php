@@ -28,12 +28,21 @@ class BookingRegistrasiRepository
     }
 
     /**
+     * The patient's online bookings that loket has already turned into a
+     * real `reg_periksa` registration — pending ones are left out.
+     *
      * @return Collection<int, BookingRegistrasi>
      */
     public function listForPatient(string $noRkmMedis, int $limit = 50): Collection
     {
         return BookingRegistrasi::query()
             ->where('no_rkm_medis', $noRkmMedis)
+            ->whereExists(fn ($query) => $query
+                ->from('reg_periksa')
+                ->whereColumn('reg_periksa.no_rkm_medis', 'booking_registrasi.no_rkm_medis')
+                ->whereColumn('reg_periksa.tgl_registrasi', 'booking_registrasi.tanggal_periksa')
+                ->whereColumn('reg_periksa.kd_poli', 'booking_registrasi.kd_poli')
+                ->whereColumn('reg_periksa.kd_dokter', 'booking_registrasi.kd_dokter'))
             ->orderByDesc('tanggal_periksa')
             ->limit($limit)
             ->get();

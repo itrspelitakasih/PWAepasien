@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
  * Lets the Khanza cashier client call a specific queue ticket by no_rawat,
  * triggered from DlgKasirRalan's "Masuk Poli" action — the staff there
  * already picked which visit to call, so this bypasses the FIFO
- * QueueTicketService::callNext() used by this app's own Filament board.
+ * QueueTicketService::callNext().
  */
 class AntrianCallController extends Controller
 {

@@ -45,6 +45,8 @@ class PatientRegistrationController extends Controller
         $jadwal = $kdPoli ? $this->jadwalRepository->forPoliAndDate($kdPoli, $tanggal) : collect();
         $hasKnownPayer = $this->regPeriksaRepository->mostRecentKdPj($account->no_rkm_medis) !== null;
 
+        $bookings = $this->bookingRegistrasiRepository->listForPatient($account->no_rkm_medis);
+
         return view('patient.pendaftaran', [
             'account' => $account,
             'polis' => $this->poliklinikRepository
@@ -56,7 +58,9 @@ class PatientRegistrationController extends Controller
             'jadwal' => $jadwal,
             'dokters' => $this->dokterRepository->findMany($jadwal->pluck('jadwal.kd_dokter')->all()),
             'penjabs' => $hasKnownPayer ? collect() : $this->penjabRepository->active(),
-            'bookings' => $this->bookingRegistrasiRepository->listForPatient($account->no_rkm_medis),
+            'bookings' => $bookings,
+            'bookingPolis' => $this->poliklinikRepository->findMany($bookings->pluck('kd_poli')->all()),
+            'bookingDokters' => $this->dokterRepository->findMany($bookings->pluck('kd_dokter')->all()),
         ]);
     }
 

@@ -68,3 +68,66 @@ document.addEventListener('DOMContentLoaded', () => {
         }, true);
     });
 });
+
+/**
+ * Polls for tickets called today and, the first time a given ticket shows
+ * up as called, vibrates the phone and shows a banner. Seen ticket ids are
+ * kept in localStorage so a reload doesn't re-alert. Browsers only allow
+ * vibration while the page is open and after the user has tapped it once;
+ * iOS Safari doesn't support it at all (the WhatsApp message covers that).
+ */
+window.patientWatchQueueCalls = function (endpoint, banner) {
+    const STORAGE_KEY = 'queue_call_alerted';
+    const PATTERN = [600, 250, 600, 250, 600, 250, 1200];
+
+    const readSeen = () => {
+        try {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
+        } catch (e) {
+            return [];
+        }
+    };
+
+    const writeSeen = (ids) => {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(ids.slice(-50)));
+        } catch (e) {}
+    };
+
+    const alertFor = (ticket) => {
+        banner.querySelector('[data-call-text]').textContent =
+            `Nomor antrean ${ticket.queue_number} dipanggil di ${ticket.poli}. Silakan menuju ruang periksa.`;
+        banner.classList.remove('hidden');
+
+        if (navigator.vibrate) {
+            navigator.vibrate(PATTERN);
+        }
+    };
+
+    const check = async () => {
+        if (document.hidden) return;
+
+        try {
+            const response = await fetch(endpoint, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+            if (!response.ok) return;
+
+            const { called } = await response.json();
+            const seen = readSeen();
+            const fresh = called.filter((ticket) => !seen.includes(ticket.id));
+
+            if (fresh.length === 0) return;
+
+            alertFor(fresh[fresh.length - 1]);
+            writeSeen([...seen, ...fresh.map((ticket) => ticket.id)]);
+        } catch (e) {}
+    };
+
+    banner.querySelector('[data-call-dismiss]')?.addEventListener('click', () => {
+        banner.classList.add('hidden');
+        navigator.vibrate?.(0);
+    });
+
+    document.addEventListener('visibilitychange', check);
+    setInterval(check, 8000);
+    check();
+};

@@ -24,6 +24,7 @@ class Setting extends Model
         'logo_path',
         'icon_path',
         'favicon_path',
+        'theme_color',
         'gowa_base_url',
         'gowa_username',
         'gowa_password',
@@ -34,6 +35,9 @@ class Setting extends Model
         'sik_db_database',
         'sik_db_username',
         'sik_db_password',
+        'radiologi_image_base_url',
+        'queue_purge_enabled',
+        'queue_purge_keep_days',
     ];
 
     /**
@@ -44,6 +48,8 @@ class Setting extends Model
         return [
             'gowa_password' => 'encrypted',
             'sik_db_password' => 'encrypted',
+            'queue_purge_enabled' => 'boolean',
+            'queue_purge_keep_days' => 'integer',
         ];
     }
 
@@ -84,6 +90,42 @@ class Setting extends Model
     public function faviconUrl(): ?string
     {
         return $this->favicon_path ? Storage::disk('public')->url($this->favicon_path) : null;
+    }
+
+    /**
+     * CSS overriding Tailwind's `blue` palette with shades derived from the
+     * configured theme color, or null to keep the default blue. The portal
+     * views use `blue-*` utilities, which compile to `var(--color-blue-*)`,
+     * so redefining the variables re-themes every page. The chosen color is
+     * the 600 shade; lighter/darker shades are mixed with white/black.
+     */
+    public function themeCss(): ?string
+    {
+        if (! preg_match('/^#[0-9a-f]{6}$/i', (string) $this->theme_color)) {
+            return null;
+        }
+
+        $base = $this->theme_color;
+        $shades = [
+            50 => "{$base} 6%, white",
+            100 => "{$base} 12%, white",
+            200 => "{$base} 24%, white",
+            300 => "{$base} 42%, white",
+            400 => "{$base} 68%, white",
+            500 => "{$base} 86%, white",
+            600 => "{$base} 100%, white",
+            700 => "{$base} 85%, black",
+            800 => "{$base} 70%, black",
+            900 => "{$base} 55%, black",
+            950 => "{$base} 40%, black",
+        ];
+
+        $declarations = '';
+        foreach ($shades as $shade => $mix) {
+            $declarations .= "--color-blue-{$shade}:color-mix(in oklab,{$mix});";
+        }
+
+        return ":root{{$declarations}}";
     }
 
     /**

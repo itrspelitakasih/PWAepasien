@@ -2,6 +2,8 @@
 
 @section('content')
     <div class="relative overflow-hidden rounded-b-3xl bg-linear-to-b from-blue-500 to-blue-700 px-5 pb-14 pt-6 text-white dark:from-blue-700 dark:to-blue-900">
+        @include('partials.patient-backdrop', ['contained' => true, 'light' => true])
+
         <div class="relative z-10 mb-6 flex items-center justify-between">
             <h1 class="text-xl font-semibold">Beranda</h1>
             <div class="flex items-center gap-3">
@@ -19,9 +21,16 @@
                     </svg>
                 </button>
 
-                <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
-                </svg>
+                <a href="{{ route('patient.notifikasi') }}" class="relative flex size-8 items-center justify-center" aria-label="Notifikasi{{ $notifikasiBelumDibaca > 0 ? ' ('.$notifikasiBelumDibaca.' belum dibaca)' : '' }}">
+                    <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+                    </svg>
+                    @if ($notifikasiBelumDibaca > 0)
+                        <span class="absolute -right-0.5 -top-0.5 flex min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-4 text-white ring-2 ring-blue-600 dark:ring-blue-700">
+                            {{ $notifikasiBelumDibaca > 9 ? '9+' : $notifikasiBelumDibaca }}
+                        </span>
+                    @endif
+                </a>
             </div>
         </div>
 
@@ -100,9 +109,9 @@
             ['label' => 'Riwayat Surat', 'route' => 'patient.surat', 'icon' => 'mail'],
             ['label' => 'Riwayat Kunjungan', 'route' => 'patient.riwayat', 'icon' => 'history'],
             ['label' => 'Antrean Saya', 'route' => 'patient.antrian', 'icon' => 'queue'],
-            ['label' => 'Kamar Tersedia', 'route' => null, 'icon' => 'building'],
-            ['label' => 'Tarif Laborat', 'route' => null, 'icon' => 'flask'],
-            ['label' => 'Tarif Radiologi', 'route' => null, 'icon' => 'scan'],
+            ['label' => 'Kamar Tersedia', 'route' => 'patient.kamar', 'icon' => 'building'],
+            ['label' => 'Riwayat Lab', 'route' => 'patient.lab', 'icon' => 'flask'],
+            ['label' => 'Riwayat Radiologi', 'route' => 'patient.radiologi', 'icon' => 'scan'],
         ];
 
         $icons = [
@@ -167,13 +176,19 @@
                         <p class="mt-1 text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500">
                             {{ $polis[$entry['jadwal']->kd_poli]?->nm_poli ?? $entry['jadwal']->kd_poli }}
                         </p>
-                        <p class="mt-1.5 flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-                            <svg class="size-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                        <p class="mt-1.5 flex items-start gap-1 text-xs text-gray-500 dark:text-gray-400">
+                            <svg class="mt-px size-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6-2a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z" />
                             </svg>
-                            {{ \Illuminate\Support\Carbon::parse($entry['jadwal']->jam_mulai)->format('H:i') }}
-                            &ndash;
-                            {{ \Illuminate\Support\Carbon::parse($entry['jadwal']->jam_selesai)->format('H:i') }}
+                            <span>
+                                @foreach ($entry['sesi'] as $sesi)
+                                    <span class="block">
+                                        {{ \Illuminate\Support\Carbon::parse($sesi['jam_mulai'])->format('H:i') }}
+                                        &ndash;
+                                        {{ \Illuminate\Support\Carbon::parse($sesi['jam_selesai'])->format('H:i') }}
+                                    </span>
+                                @endforeach
+                            </span>
                         </p>
                     </div>
                 </div>

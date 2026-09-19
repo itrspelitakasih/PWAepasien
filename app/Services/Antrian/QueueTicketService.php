@@ -5,9 +5,12 @@ namespace App\Services\Antrian;
 use App\Jobs\SendQueueNotification;
 use App\Models\Khanza\RegPeriksa;
 use App\Models\QueueTicket;
+use App\Repositories\Khanza\RegPeriksaRepository;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 /**
  * Owns all queue-state transitions for `queue_tickets` (this app's own
@@ -18,6 +21,84 @@ use Illuminate\Support\Facades\DB;
  */
 class QueueTicketService
 {
+    /**
+     * Seconds a patient's tickets are trusted before Khanza is asked again —
+     * the board polls every 10s, and one indexed lookup per poll per patient
+     * is more than the data needs.
+     */
+    private const PATIENT_SYNC_TTL = 8;
+
+    public function __construct(private readonly RegPeriksaRepository $regPeriksaRepository) {}
+
+    /**
+     * Brings one patient's tickets for today in step with their Khanza
+     * registrations, so the portal reflects a fresh registration (or a
+     * cancelled/finished one) immediately rather than after the next
+     * `antrian:sync` tick. A registration means a ticket; no registration
+     * means no ticket. Never throws: if Khanza is unreachable the tickets
+     * already stored are simply shown as they are.
+     */
+    public function syncPatientToday(string $noRkmMedis): void
+    {
+        if (! Cache::add('antrian:patient-sync:'.$noRkmMedis, true, self::PATIENT_SYNC_TTL)) {
+            return;
+        }
+
+        try {
+            $visits = $this->regPeriksaRepository->ralanForPatientOn($noRkmMedis, Carbon::today()->toDateString());
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return;
+        }
+
+        $tickets = QueueTicket::query()
+            ->where('no_rkm_medis', $noRkmMedis)
+            ->whereDate('tanggal', Carbon::today())
+            ->get()
+            ->keyBy('no_rawat');
+
+        foreach ($visits as $visit) {
+            $ticket = $tickets->pull($visit->no_rawat);
+            $stts = $visit->stts;
+
+            if ($ticket === null) {
+                if (! in_array($stts, ['Sudah', 'Batal'], true)) {
+                    try {
+                        $this->issueTicket($visit);
+                    } catch (QueryException $exception) {
+                        // The poller issued this visit's ticket a moment ago.
+                        if (! str_contains($exception->getMessage(), 'Duplicate entry')
+                            && ! str_contains($exception->getMessage(), 'UNIQUE constraint failed')) {
+                            throw $exception;
+                        }
+                    }
+                }
+
+                continue;
+            }
+
+            if ($stts === 'Sudah') {
+                if (in_array($ticket->status, ['waiting', 'called', 'cancelled'], true)) {
+                    $this->markDone($ticket);
+                }
+            } elseif ($stts === 'Batal') {
+                if (in_array($ticket->status, ['waiting', 'called'], true)) {
+                    $this->cancel($ticket);
+                }
+            } else {
+                $this->restore($ticket);
+            }
+        }
+
+        // Tickets whose visit is no longer in Khanza at all.
+        foreach ($tickets as $ticket) {
+            if (in_array($ticket->status, ['waiting', 'called'], true)) {
+                $this->cancel($ticket);
+            }
+        }
+    }
+
     /**
      * Create the next queue ticket for a visit, appending it to the end
      * of that poli's line for the day.
@@ -123,9 +204,20 @@ class QueueTicketService
 
     public function markDone(QueueTicket $ticket): void
     {
-        $ticket->update(['status' => 'done', 'done_at' => now()]);
+        $this->markDoneQuietly($ticket);
 
         $this->recalculateNearNotifications($ticket->kd_poli, $ticket->tanggal);
+    }
+
+    /**
+     * Like markDone() but leaves the "near" notifications to the caller, so a
+     * batch of tickets can be closed first and recalculated once afterwards
+     * (otherwise a patient about to be closed in the same batch could be told
+     * they are nearly up).
+     */
+    public function markDoneQuietly(QueueTicket $ticket): void
+    {
+        $ticket->update(['status' => 'done', 'done_at' => now()]);
     }
 
     public function skip(QueueTicket $ticket): void
@@ -140,6 +232,20 @@ class QueueTicketService
         $ticket->update(['status' => 'cancelled']);
 
         $this->recalculateNearNotifications($ticket->kd_poli, $ticket->tanggal);
+    }
+
+    /**
+     * Bring a cancelled ticket back (its visit turned out to exist in
+     * Khanza after all). Deliberately sends no notifications — the patient
+     * has already been told about this ticket once.
+     */
+    public function restore(QueueTicket $ticket): void
+    {
+        if ($ticket->status !== 'cancelled') {
+            return;
+        }
+
+        $ticket->update(['status' => $ticket->called_at ? 'called' : 'waiting']);
     }
 
     /**
@@ -164,7 +270,7 @@ class QueueTicketService
      * Notify any waiting ticket that has just become exactly
      * `near_threshold` patients away from its turn.
      */
-    private function recalculateNearNotifications(string $kdPoli, Carbon $tanggal): void
+    public function recalculateNearNotifications(string $kdPoli, Carbon $tanggal): void
     {
         $threshold = (int) config('antrian.near_threshold');
 

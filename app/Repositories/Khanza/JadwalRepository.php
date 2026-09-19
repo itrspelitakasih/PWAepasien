@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Khanza;
 
+use App\Models\Khanza\BookingRegistrasi;
 use App\Models\Khanza\Jadwal;
 use App\Models\Khanza\RegPeriksa;
 use Illuminate\Support\Carbon;
@@ -57,14 +58,17 @@ class JadwalRepository
     }
 
     /**
-     * Schedule rows across all poli for a given date, each with its
-     * remaining quota, ordered by start time and capped to $limit — used for
-     * the patient portal's "jadwal dokter hari ini" homepage widget. Empty
-     * when the date is a Khanza-wide holiday.
+     * One entry per doctor/poli for a given date, ordered by first start
+     * time and optionally capped to $limit — used for the patient portal's
+     * "jadwal dokter hari ini" homepage widget. A doctor who practices in several
+     * sessions the same day at the same poli gets a single entry listing
+     * every session in `sesi`, with the quota summed across sessions.
+     * `jadwal` is the earliest session. Empty when the date is a Khanza-wide
+     * holiday.
      *
-     * @return Collection<int, array{jadwal: Jadwal, sisa_kuota: int}>
+     * @return Collection<int, array{jadwal: Jadwal, sesi: array<int, array{jam_mulai: string, jam_selesai: string}>, sisa_kuota: int}>
      */
-    public function forDate(Carbon $date, int $limit = 5): Collection
+    public function forDate(Carbon $date, ?int $limit = null): Collection
     {
         if ($this->isHoliday($date)) {
             return collect();
@@ -75,12 +79,26 @@ class JadwalRepository
         return Jadwal::query()
             ->where('hari_kerja', $hariKerja)
             ->orderBy('jam_mulai')
-            ->limit($limit)
             ->get()
-            ->map(fn (Jadwal $jadwal): array => [
-                'jadwal' => $jadwal,
-                'sisa_kuota' => max(0, $jadwal->kuota - $this->registeredCount($jadwal->kd_dokter, $jadwal->kd_poli, $date)),
-            ]);
+            ->groupBy(fn (Jadwal $jadwal): string => $jadwal->kd_dokter.'|'.$jadwal->kd_poli)
+            ->map(function (Collection $sessions) use ($date): array {
+                /** @var Jadwal $first */
+                $first = $sessions->first();
+
+                return [
+                    'jadwal' => $first,
+                    'sesi' => $sessions
+                        ->map(fn (Jadwal $jadwal): array => [
+                            'jam_mulai' => $jadwal->jam_mulai,
+                            'jam_selesai' => $jadwal->jam_selesai,
+                        ])
+                        ->values()
+                        ->all(),
+                    'sisa_kuota' => max(0, $sessions->sum('kuota') - $this->registeredCount($first->kd_dokter, $first->kd_poli, $date)),
+                ];
+            })
+            ->values()
+            ->when($limit !== null, fn (Collection $entries): Collection => $entries->take($limit));
     }
 
     public function isHoliday(Carbon $date): bool
@@ -91,12 +109,26 @@ class JadwalRepository
             ->exists();
     }
 
+    /**
+     * Registrations already taking a slot: real `reg_periksa` rows plus
+     * online bookings loket hasn't processed yet (status "Belum"), which
+     * become `reg_periksa` rows later — so nothing is counted twice.
+     */
     private function registeredCount(string $kdDokter, string $kdPoli, Carbon $date): int
     {
-        return RegPeriksa::query()
+        $registered = RegPeriksa::query()
             ->where('kd_dokter', $kdDokter)
             ->where('kd_poli', $kdPoli)
             ->whereDate('tgl_registrasi', $date)
             ->count();
+
+        $pendingBookings = BookingRegistrasi::query()
+            ->where('kd_dokter', $kdDokter)
+            ->where('kd_poli', $kdPoli)
+            ->whereDate('tanggal_periksa', $date)
+            ->where('status', 'Belum')
+            ->count();
+
+        return $registered + $pendingBookings;
     }
 }

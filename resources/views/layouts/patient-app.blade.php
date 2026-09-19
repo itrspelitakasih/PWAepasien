@@ -18,6 +18,7 @@
             })();
         </script>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @include('partials.patient-theme')
     </head>
     <body class="min-h-screen bg-gray-200 text-gray-900 antialiased dark:bg-black dark:text-gray-100">
         <div class="relative mx-auto flex min-h-screen w-full max-w-md flex-col bg-gray-50 shadow-xl dark:bg-gray-950">
@@ -81,5 +82,26 @@
                 </a>
             </nav>
         </div>
+        @auth('pasien')
+            <div id="queue-call-banner" class="fixed inset-x-0 top-0 z-50 mx-auto hidden max-w-md p-3" role="alert">
+                <div class="flex items-start gap-3 rounded-2xl bg-green-600 px-4 py-3 text-white shadow-lg">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-sm font-semibold">Giliran Anda!</p>
+                        <p class="text-sm" data-call-text></p>
+                        <a href="{{ route('patient.antrian') }}" class="mt-1 inline-block text-xs font-semibold underline">Lihat antrean</a>
+                    </div>
+                    <button type="button" data-call-dismiss class="rounded-full p-1 hover:bg-white/20" aria-label="Tutup">
+                        <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    window.patientWatchQueueCalls(@js(route('patient.antrian.called')), document.getElementById('queue-call-banner'));
+                });
+            </script>
+        @endauth
     </body>
 </html>

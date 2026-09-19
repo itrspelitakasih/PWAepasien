@@ -10,6 +10,7 @@ use App\Repositories\Khanza\JadwalRepository;
 use App\Repositories\Khanza\PoliklinikRepository;
 use App\Services\Antrian\QueueTicketService;
 use App\Services\Patients\PatientAuthService;
+use App\Services\Patients\PatientNotificationFeed;
 use App\Services\Patients\PatientOtpService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,6 +28,7 @@ class PatientPortalController extends Controller
         private readonly DokterRepository $dokterRepository,
         private readonly PoliklinikRepository $poliklinikRepository,
         private readonly QueueTicketService $queueTicketService,
+        private readonly PatientNotificationFeed $notificationFeed,
     ) {}
 
     public function welcome(): View
@@ -40,6 +42,8 @@ class PatientPortalController extends Controller
         $account = $request->user('pasien');
 
         $jadwalHariIni = $this->jadwalRepository->forDate(Carbon::today());
+
+        $this->queueTicketService->syncPatientToday($account->no_rkm_medis);
 
         $antrianAktif = QueueTicket::query()
             ->where('no_rkm_medis', $account->no_rkm_medis)
@@ -57,6 +61,7 @@ class PatientPortalController extends Controller
             'antrianPoli' => $antrianAktif ? $this->poliklinikRepository->find($antrianAktif->kd_poli) : null,
             'antrianPosisi' => $antrianAktif ? $this->queueTicketService->positionAhead($antrianAktif) : null,
             'antrianEta' => $antrianAktif ? $this->queueTicketService->etaMinutes($antrianAktif) : null,
+            'notifikasiBelumDibaca' => $this->notificationFeed->unreadCount($account),
         ]);
     }
 

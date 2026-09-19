@@ -17,9 +17,12 @@
             })();
         </script>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @include('partials.patient-theme')
     </head>
-    <body class="min-h-screen bg-gray-50 text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-100">
-        <div class="flex min-h-screen flex-col items-center px-4 py-10">
+    <body class="min-h-screen bg-linear-to-b from-blue-50 via-gray-50 to-white text-gray-900 antialiased dark:from-gray-950 dark:via-gray-950 dark:to-gray-900 dark:text-gray-100">
+        @include('partials.patient-backdrop')
+
+        <div class="relative z-10 flex min-h-screen flex-col items-center px-4 py-10">
             @if ($centerLogo ?? false)
                 <div class="mb-6 flex w-full max-w-2xl justify-center">
                     @if (\App\Models\Setting::current()->logoUrl())
@@ -51,7 +54,7 @@
                 </div>
             @endif
 
-            <div class="w-full {{ $wide ?? false ? 'max-w-2xl' : 'max-w-sm' }} rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            <div class="w-full {{ $wide ?? false ? 'max-w-2xl' : 'max-w-sm' }} rounded-3xl border border-white/70 bg-white/95 p-7 shadow-[0_24px_60px_-15px_rgba(37,99,235,0.28),0_10px_24px_-10px_rgba(15,23,42,0.18)] ring-1 ring-black/5 backdrop-blur-md dark:border-white/5 dark:bg-gray-900/90 dark:shadow-[0_24px_60px_-15px_rgba(0,0,0,0.8),0_10px_24px_-10px_rgba(0,0,0,0.6)] dark:ring-white/5">
                 @if (session('status'))
                     <div class="mb-4 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700 dark:bg-green-900/30 dark:text-green-300">
                         {{ session('status') }}

@@ -3,9 +3,12 @@
 namespace Tests\Feature\Patient;
 
 use App\Livewire\Patient\QueueBoard;
+use App\Models\Khanza\RegPeriksa;
 use App\Models\PatientAccount;
 use App\Models\QueueTicket;
+use App\Repositories\Khanza\RegPeriksaRepository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -22,12 +25,27 @@ class PatientQueueTest extends TestCase
     {
         $account = PatientAccount::factory()->create(['no_rkm_medis' => '000123']);
 
+        // The board reflects Khanza for today; this patient's visit is still open there.
+        $this->mock(RegPeriksaRepository::class, function ($mock): void {
+            $mock->shouldReceive('ralanForPatientOn')->andReturn(collect([
+                (new RegPeriksa)->forceFill([
+                    'no_rawat' => '2026/09/18/000001',
+                    'no_rkm_medis' => '000123',
+                    'kd_poli' => 'POLI1',
+                    'kd_dokter' => 'DOK1',
+                    'tgl_registrasi' => Carbon::today(),
+                    'status_lanjut' => 'Ralan',
+                    'stts' => 'Belum',
+                ]),
+            ]));
+        });
+
         $mine = QueueTicket::query()->create([
             'no_rawat' => '2026/09/18/000001',
             'no_rkm_medis' => '000123',
             'kd_poli' => 'POLI1',
             'kd_dokter' => 'DOK1',
-            'tanggal' => '2026-09-18',
+            'tanggal' => Carbon::today(),
             'queue_number' => 3,
             'status' => 'waiting',
         ]);
@@ -37,7 +55,7 @@ class PatientQueueTest extends TestCase
             'no_rkm_medis' => '000123',
             'kd_poli' => 'POLI1',
             'kd_dokter' => 'DOK1',
-            'tanggal' => '2026-09-17',
+            'tanggal' => Carbon::yesterday(),
             'queue_number' => 1,
             'status' => 'done',
         ]);
@@ -47,7 +65,7 @@ class PatientQueueTest extends TestCase
             'no_rkm_medis' => '999999',
             'kd_poli' => 'POLI1',
             'kd_dokter' => 'DOK1',
-            'tanggal' => '2026-09-18',
+            'tanggal' => Carbon::today(),
             'queue_number' => 1,
             'status' => 'waiting',
         ]);

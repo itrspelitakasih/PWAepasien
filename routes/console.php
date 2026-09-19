@@ -14,3 +14,12 @@ Artisan::command('inspire', function () {
 Schedule::command('antrian:sync')
     ->everyThirtySeconds()
     ->withoutOverlapping();
+
+Schedule::command('lab:sync')
+    ->everyThirtySeconds()
+    ->withoutOverlapping();
+
+// No-op unless "Hapus tiket antrean otomatis" is enabled in Settings.
+Schedule::command('antrian:purge')
+    ->dailyAt('00:05')
+    ->withoutOverlapping();

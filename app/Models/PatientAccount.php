@@ -30,6 +30,7 @@ class PatientAccount extends Authenticatable
         'notify_lab_result',
         'theme',
         'last_login_at',
+        'notifications_read_at',
     ];
 
     /**
@@ -48,6 +49,7 @@ class PatientAccount extends Authenticatable
             'notify_queue' => 'boolean',
             'notify_lab_result' => 'boolean',
             'last_login_at' => 'datetime',
+            'notifications_read_at' => 'datetime',
         ];
     }
 

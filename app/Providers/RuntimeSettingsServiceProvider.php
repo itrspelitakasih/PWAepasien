@@ -8,8 +8,8 @@ use Throwable;
 
 /**
  * Applies DB-stored Setting overrides on top of the `.env`-driven config
- * for `gowa.*` and the `sik` database connection, so an admin can change
- * the WhatsApp/SIMRS connection details from the Settings page without a
+ * for `gowa.*`, `radiologi.*` and the `sik` database connection, so an admin
+ * can change the WhatsApp/SIMRS connection details from the Settings page without a
  * redeploy. An empty field on the Setting record leaves the `.env`
  * value in place — only non-empty overrides are applied. Runs on every
  * request, so it relies on `Setting::current()`'s cache rather than
@@ -28,6 +28,14 @@ class RuntimeSettingsServiceProvider extends ServiceProvider
 
         $this->overrideGowaConfig($setting);
         $this->overrideSikConnection($setting);
+        $this->overrideRadiologiConfig($setting);
+    }
+
+    private function overrideRadiologiConfig(Setting $setting): void
+    {
+        config(array_filter([
+            'radiologi.image_base_url' => $setting->radiologi_image_base_url,
+        ], fn ($value) => filled($value)));
     }
 
     private function overrideGowaConfig(Setting $setting): void
