@@ -16,7 +16,7 @@ use App\Http\Controllers\Patient\PatientSuratController;
 use App\Http\Middleware\EnsurePortalIsConfigured;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('mobile')->name('patient.')->middleware(EnsurePortalIsConfigured::class)->group(function () {
+Route::name('patient.')->middleware(EnsurePortalIsConfigured::class)->group(function () {
     Route::middleware('guest:pasien')->group(function () {
         Route::get('welcome', [PatientPortalController::class, 'welcome'])->name('welcome');
 

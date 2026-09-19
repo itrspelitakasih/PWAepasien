@@ -68,7 +68,7 @@ Fitur utama:
 ## 2. Arsitektur Singkat
 
 ```
-Perangkat pasien  ──HTTPS──►  Nginx + PHP-FPM  (Laravel: portal /mobile, panel /admin)
+Perangkat pasien  ──HTTPS──►  Nginx + PHP-FPM  (Laravel: portal /, panel /admin)
                                    │
         ┌──────────────────────────┼─────────────────────────────┐
         ▼                          ▼                             ▼
@@ -112,7 +112,7 @@ npm install
 composer dev
 ```
 
-`composer dev` menjalankan server Laravel, queue listener, log viewer (pail), dan Vite sekaligus. Portal pasien ada di `http://localhost:8000/mobile`, panel admin di `http://localhost:8000/admin`.
+`composer dev` menjalankan server Laravel, queue listener, log viewer (pail), dan Vite sekaligus. Portal pasien ada di `http://localhost:8000`, panel admin di `http://localhost:8000/admin`.
 
 Koneksi Khanza dan GOWA tetap perlu diisi (lewat `.env` atau halaman **Pengaturan** di panel admin) agar portal tidak berhenti di halaman "setup pending".
 
@@ -364,7 +364,7 @@ Pastikan device WhatsApp sudah terhubung di GOWA. Jika perangkat sudah terdaftar
 php artisan gowa:import-devices
 ```
 
-Setelah GOWA dan koneksi Khanza sama-sama berhasil, portal pasien di `/mobile` akan aktif (bila belum, halaman "setup pending" tetap tampil dan cache status diperbarui dalam ±30 detik).
+Setelah GOWA dan koneksi Khanza sama-sama berhasil, portal pasien di `/` akan aktif (bila belum, halaman "setup pending" tetap tampil dan cache status diperbarui dalam ±30 detik).
 
 ---
 
